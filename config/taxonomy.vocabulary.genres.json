@@ -1,0 +1,9 @@
+{
+    "_config_name": "taxonomy.vocabulary.genres",
+    "name": "Genres",
+    "machine_name": "genres",
+    "description": "",
+    "hierarchy": "0",
+    "language": 0,
+    "weight": 0
+}
