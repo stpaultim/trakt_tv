@@ -1,0 +1,12 @@
+{
+  "trakt_tv.settings": {
+    "type": "config_object",
+    "label": "Trakt TV Settings",
+    "mapping": {
+      "api_key": {
+        "type": "string",
+        "label": "Trakt TV API Key"
+      }
+    }
+  }
+}

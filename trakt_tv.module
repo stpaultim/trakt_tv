@@ -1,0 +1,209 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function trakt_tv_install() {
+  config_set('trakt_tv.settings', [
+    'api_key' => '', // Leave blank for site admins to configure.
+  ]);
+}
+
+function trakt_tv_init() {
+  module_load_include('inc', 'trakt_tv', 'trakt_tv.api');
+  module_load_include('inc', 'trakt_tv', 'trakt_tv.nodes');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function trakt_tv_menu() {
+
+
+  $items = [];
+
+  // Route for trending TV shows.
+  $items['trakt-tv'] = [
+    'title' => 'Trending TV Shows',
+    'page callback' => 'trakt_tv_display',
+    'access arguments' => ['access content'],
+    'type' => MENU_CALLBACK,
+  ];
+
+  // Route for the search form.
+  $items['trakt-tv-search'] = [
+    'title' => 'Search TV Show',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['trakt_tv_search_form'],
+    'access arguments' => ['access content'],
+    'type' => MENU_CALLBACK,
+  ];
+
+  // Route for search results.
+  $items['trakt-tv-search-results/%'] = [
+    'title' => 'Search Results',
+    'page callback' => 'trakt_tv_search_results_page',
+    'page arguments' => [1],
+    'access arguments' => ['access content'],
+    'type' => MENU_CALLBACK,
+  ];
+
+  // Route for creating a node from search results.
+  $items['trakt-tv-create-node-from-id/%'] = [
+    'title' => 'Create TV Show Node',
+    'page callback' => 'trakt_tv_create_node_from_trakt_id',
+    'page arguments' => [1],
+    'access arguments' => ['access content'],
+    'type' => MENU_CALLBACK,
+  ];
+
+  $items['admin/config/media/trakt_tv'] = [
+    'title' => 'Trakt TV Settings',
+    'description' => 'Configure API settings for Trakt TV integration.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['trakt_tv_settings_form'],
+    'access arguments' => ['administer site configuration'],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  return $items;
+}
+
+/**
+ * Form to manage Trakt TV API settings.
+ */
+function trakt_tv_settings_form($form, &$form_state) {
+  $config = config_get('trakt_tv.settings');
+
+  // Ensure the key exists or set a default.
+  $api_key = isset($config['api_key']) ? $config['api_key'] : '';
+
+  $form['api_key'] = [
+    '#type' => 'textfield',
+    '#title' => t('Trakt TV API Key'),
+    '#description' => t('Enter your Trakt TV API key.'),
+    '#default_value' => $api_key,
+    '#required' => TRUE,
+  ];
+
+  $form['submit'] = [
+    '#type' => 'submit',
+    '#value' => t('Save Configuration'),
+  ];
+
+  return $form;
+}
+
+/**
+ * Submit handler for Trakt TV API settings form.
+ */
+function trakt_tv_settings_form_submit($form, &$form_state) {
+  if (!empty($form_state['values']['api_key'])) {
+    $api_key = $form_state['values']['api_key'];
+
+    // Save the API key to configuration.
+    config_set('trakt_tv.settings', 'api_key', $api_key);
+
+    backdrop_set_message(t('The Trakt TV API key has been saved.'));
+  }
+  else {
+    backdrop_set_message(t('Please enter a valid API key.'), 'error');
+  }
+}
+
+
+/**
+ * Display trending TV shows.
+ */
+function trakt_tv_display() {
+  $shows = trakt_tv_fetch_trending();
+  $table = '';
+
+  if (empty($shows)) {
+    return '<p>Unable to fetch TV shows at the moment. Please try again later.</p>';
+  }
+  return trakt_tv_create_table($shows);
+}
+
+
+/**
+ * Create table of shows.
+ */
+
+function trakt_tv_create_table($shows) {
+  $header = ['Title', 'Year', 'Status', 'ID'];
+  $rows = [];
+
+  foreach ($shows as $show) {
+
+    $rows[] = [
+      $show['show']['title'],
+      $show['show']['year'],
+      trakt_tv_node_check($show),
+      $show['show']['ids']['trakt']
+    ];
+  }
+
+  // Render the table and return it.
+  return theme('table', [
+    'header' => $header,
+    'rows' => $rows,
+  ]);
+}
+
+
+/**
+ * Search form for finding and creating TV show nodes.
+ */
+function trakt_tv_search_form($form, &$form_state) {
+  $form['search_query'] = [
+    '#type' => 'textfield',
+    '#title' => t('Search for a TV Show'),
+    '#description' => t('Enter the name of the TV show to search.'),
+    '#required' => TRUE,
+  ];
+
+  $form['actions'] = [
+    '#type' => 'actions',
+    'submit' => [
+      '#type' => 'submit',
+      '#value' => t('Search'),
+      '#submit' => ['trakt_tv_search_form_submit'],
+    ],
+  ];
+
+  return $form;
+}
+
+
+/**
+ * Submit handler for the TV show search form.
+ */
+function trakt_tv_search_form_submit($form, &$form_state) {
+  $query = trim($form_state['values']['search_query']); // Remove extra spaces.
+
+  if (empty($query)) {
+    drupal_set_message(t('Please enter a valid TV show name.'), 'error');
+    watchdog('trakt_tv', 'Search form submitted with an empty query.', [], WATCHDOG_WARNING);
+    return;
+  }
+
+  // Log the sanitized query.
+  watchdog('trakt_tv', 'Search form submitted with query: @query', ['@query' => $query], WATCHDOG_DEBUG);
+
+  // Redirect to the search results page with the query.
+  $form_state['redirect'] = 'trakt-tv-search-results/' . check_plain($query);
+}
+
+
+/**
+ * Display search results and allow node creation.
+ */
+function trakt_tv_search_results_page($query) {
+  $shows = trakt_tv_search_api($query);
+
+  if (empty($shows)) {
+    return '<p>No TV shows found for the query: ' . check_plain($query) . '</p>';
+  }
+  return trakt_tv_create_table($shows);
+}
