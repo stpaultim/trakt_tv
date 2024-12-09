@@ -7,12 +7,20 @@ It currently, does the following.
 
 1) Allows a site vistor to view a list of the top 10 trending shows on Trakt TV.
 2) Allows a site vistor to search for a specific TV show in the Trakt TV database.
-
-The module also allows anyone to pull data for a specific TV show and store it in a 
-a local node in the Backdrop CMS site. 
-
-[This feature requies the existence of an appropriate content type. This will be 
-added to the module later.]
+3) Allows a site vistor to create a node with the following data for any TV show.
+   - Title
+   - Trakt ID
+   - Desciption / Overview
+   - Rating
+   - Tagline
+   - Year
+   - Status
+   - Website
+   - Genres
+   - Network
+  
+This module creates a content type called TV Show with all of the fields required by
+this module. 
 
 ## Requirements
 
