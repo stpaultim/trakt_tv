@@ -1,6 +1,6 @@
 # Trakt TV API Module
 
-This module has been created to integrate with the Trakt TV API in a limited
+This module has been created to integrate with the [Trakt TV](https://trakt.tv/) API in a limited
 manner. This is a new module, custom made for Backdrop CMS.
 
 It currently, does the following. 
@@ -23,6 +23,8 @@ This module creates a content type called TV Show with all of the fields require
 this module. 
 
 ![image](https://github.com/user-attachments/assets/655b077f-beb0-407e-bae4-51668a62e908)
+
+We are open to idea for how to expand this module.
 
 
 ## Requirements
