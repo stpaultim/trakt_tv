@@ -22,6 +22,9 @@ It currently, does the following.
 This module creates a content type called TV Show with all of the fields required by
 this module. 
 
+![image](https://github.com/user-attachments/assets/655b077f-beb0-407e-bae4-51668a62e908)
+
+
 ## Requirements
 
 - This module requires a Trakt TV API Key. You will need to create an account on
