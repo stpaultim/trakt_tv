@@ -32,7 +32,7 @@ Bugs and feature requests should be reported in the [Issue Queue](https://github
 
 ## Current Maintainer
 
-[Tim Erickson](https://github.com/stpaultim)
+- [Tim Erickson](https://github.com/stpaultim)
 
 ## Credits
 
