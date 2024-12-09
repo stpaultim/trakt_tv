@@ -3,11 +3,7 @@
 /**
  * Implements hook_install().
  */
-function trakt_tv_install() {
-  config_set('trakt_tv.settings', [
-    'api_key' => '', // Leave blank for site admins to configure.
-  ]);
-}
+
 
 function trakt_tv_init() {
   module_load_include('inc', 'trakt_tv', 'trakt_tv.api');

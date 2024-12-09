@@ -14,6 +14,7 @@ function trakt_tv_fetch_trending() {
 
   if (empty($api_key)) {
     watchdog('trakt_tv', 'API key not configured. Please set it in module settings.', [], WATCHDOG_ERROR);
+    backdrop_set_message(t('API key not configured. Please set it in module settings.'), 'error');
     return [];
   }
 
@@ -53,6 +54,7 @@ function trakt_tv_search_api($query) {
 
   if (empty($api_key)) {
     watchdog('trakt_tv', 'API key not configured. Please set it in module settings.', [], WATCHDOG_ERROR);
+    backdrop_set_message(t('API key not configured. Please set it in module settings.'), 'error');
     return [];
   }
 

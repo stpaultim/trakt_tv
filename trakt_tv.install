@@ -1,0 +1,28 @@
+<?php
+
+  function trakt_tv_install() {
+
+    $item = array(
+      'link_title' => st('Trending TV Shows'),
+      'link_path' => 'trakt-tv',
+      'menu_name' => 'main-menu',
+      'weight' => -1,
+      'customized' => 1,
+    );
+    menu_link_save($item);
+
+    // Create a login link in the account menu.
+    $item = array(
+      'link_title' => st('Trakt TV Search'),
+      'link_path' => 'trakt-tv-search',
+      'menu_name' => 'main-menu',
+      'weight' => -1, 
+      'customized' => 1,
+    );
+    menu_link_save($item);
+
+    // Update the menu router information.
+    menu_rebuild();
+    
+
+  }
