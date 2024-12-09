@@ -1,0 +1,35 @@
+{
+    "_config_name": "field.instance.node.tv_show.field_status",
+    "field_name": "field_status",
+    "entity_type": "node",
+    "bundle": "tv_show",
+    "label": "Status",
+    "widget": {
+        "weight": "11",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "text_processing": "0",
+        "allowed_formats": [],
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "inline",
+            "type": "text_default",
+            "weight": "7",
+            "settings": [],
+            "module": "text"
+        }
+    }
+}
