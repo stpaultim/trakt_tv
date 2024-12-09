@@ -2,3 +2,4 @@ name = Trakt TV Integration
 description = Fetches and displays trending TV shows from the Trakt API.
 package = Custom
 backdrop = 1.x
+configure = "admin/config/services/trakt_tv"

@@ -1,8 +1,19 @@
 <?php
 
 /**
- * Implements hook_install().
+ * Implements hook_help().
+ * Provides help and a "Configure" link on the Modules page.
  */
+function trakt_tv_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#trakt_tv':
+      return '<p>The Trakt TV module provides integration with the Trakt TV API for managing TV shows.</p>';
+
+    case 'admin/modules#trakt_tv':
+      // Add the "Configure" link to the Modules page.
+      return '<p>' . l(t('Configure the Trakt TV module settings.'), 'admin/config/services/trakt_tv') . '</p>';
+  }
+}
 
 
 function trakt_tv_init() {
@@ -53,7 +64,7 @@ function trakt_tv_menu() {
     'type' => MENU_CALLBACK,
   ];
 
-  $items['admin/config/media/trakt_tv'] = [
+  $items['admin/config/services/trakt_tv'] = [
     'title' => 'Trakt TV Settings',
     'description' => 'Configure API settings for Trakt TV integration.',
     'page callback' => 'drupal_get_form',
