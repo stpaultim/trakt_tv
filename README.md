@@ -16,7 +16,9 @@ added to the module later.]
 
 ## Requirements
 
-- None
+- This module requires a Trakt TV API Key. You will need to create an account on
+  Trakt TV and create an application for an APP API key.
+  https://trakt.tv/oauth/applications/new
 
 ## Installation
 
