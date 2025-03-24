@@ -37,9 +37,18 @@ We are open to idea for how to expand this module.
 
 - Install this module using the official [Backdrop CMS instructions](https://backdropcms.org/user-guide/modules).
 
-- You will need to create an API key at Trakt TV and add it to the Trakt TV configuration
-  page. Your key will be stored in the site config files. Please, be cautious. We are hoping
-  to find a better solution in the near future (see OpenAI module solution). 
+- You will need to create an account with Trakt TV and create an app here to the necessary credentials for this module. https://trakt.tv/oauth/applications
+
+These fields are required.
+![image](https://github.com/user-attachments/assets/5a64fcef-0a63-498b-bf14-709f2b676fdf)
+
+Copy the Client ID, Client Secret, and Redirect URI. For the final step, you will need to "authorize" the URI and paste the provided code into `admin/config/media/trakt_tv/auth-exchange`.
+
+![image](https://github.com/user-attachments/assets/5f2cd152-3065-49b9-bd1e-4ebab55ef7f2)
+
+Your code will be here after you authorize your site:
+![image](https://github.com/user-attachments/assets/b9c6308f-669e-4d14-a4d2-0cf5beaf2c8d)
+
 
 ## Issues
 
