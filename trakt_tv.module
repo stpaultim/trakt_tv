@@ -1,24 +1,23 @@
 <?php
 
-/**
- * Implements hook_help().
- * Provides help and a "Configure" link on the Modules page.
- */
-function trakt_tv_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#trakt_tv':
-      return '<p>The Trakt TV module provides integration with the Trakt TV API for managing TV shows.</p>';
-
-    case 'admin/modules#trakt_tv':
-      // Add the "Configure" link to the Modules page.
-      return '<p>' . l(t('Configure the Trakt TV module settings.'), 'admin/config/services/trakt_tv') . '</p>';
-  }
-}
 
 
 function trakt_tv_init() {
   module_load_include('inc', 'trakt_tv', 'trakt_tv.api');
   module_load_include('inc', 'trakt_tv', 'trakt_tv.nodes');
+}
+
+/**
+ * Implements hook_permission().
+ * Defines permissions for the Trakt TV module.
+ */
+function trakt_tv_permission() {
+  return [
+    'save tv shows' => [
+      'title' => t('Save TV shows to the database'),
+      'description' => t('Allow users to save TV shows from the Trakt API to the database.'),
+    ],
+  ];
 }
 
 /**
@@ -60,11 +59,11 @@ function trakt_tv_menu() {
     'title' => 'Create TV Show Node',
     'page callback' => 'trakt_tv_create_node_from_trakt_id',
     'page arguments' => [1],
-    'access arguments' => ['access content'],
+    'access arguments' => ['save tv shows'],
     'type' => MENU_CALLBACK,
   ];
 
-  $items['admin/config/services/trakt_tv'] = [
+  $items['admin/config/media/trakt_tv'] = [
     'title' => 'Trakt TV Settings',
     'description' => 'Configure API settings for Trakt TV integration.',
     'page callback' => 'drupal_get_form',
@@ -73,6 +72,17 @@ function trakt_tv_menu() {
     'type' => MENU_NORMAL_ITEM,
   ];
 
+  $items['admin/config/media/trakt_tv/auth-exchange'] = [
+    'title' => 'Trakt Auth Code Exchange',
+    'description' => 'Enter an auth code from Trakt to get your access token.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['trakt_tv_auth_code_exchange_form'],
+    'access arguments' => ['administer site configuration'],
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'trakt_tv.forms.inc',
+  ];
+
+
   return $items;
 }
 
@@ -80,17 +90,35 @@ function trakt_tv_menu() {
  * Form to manage Trakt TV API settings.
  */
 function trakt_tv_settings_form($form, &$form_state) {
-  $config = config_get('trakt_tv.settings');
+  $creds = trakt_tv_get_credentials();
 
   // Ensure the key exists or set a default.
-  $api_key = isset($config['api_key']) ? $config['api_key'] : '';
+  $client_id = isset($creds['client_id']) ? $creds['client_id'] : '';
+  $client_secret = isset($creds['client_secret']) ? $creds['client_secret'] : '';
+  $redirect_uri = isset($creds['redirect_uri']) ? $creds['redirect_uri'] : '';
 
-  $form['api_key'] = [
+  $form['client_id'] = [
     '#type' => 'textfield',
-    '#title' => t('Trakt TV API Key'),
-    '#description' => t('Enter your Trakt TV API key.'),
-    '#default_value' => $api_key,
-    '#required' => TRUE,
+    '#title' => t('Client ID'),
+    '#description' => t('Client ID.'),
+    '#default_value' => $client_id,
+    '#required' => FALSE,
+  ];
+
+  $form['client_secret'] = [
+    '#type' => 'textfield',
+    '#title' => t('Client Secret'),
+    '#description' => t('Client Secret.'),
+    '#default_value' => $client_secret,
+    '#required' => FALSE,
+  ];
+
+  $form['redirect_uri'] = [
+    '#type' => 'textfield',
+    '#title' => t('Redirect URI'),
+    '#description' => t('---.'),
+    '#default_value' => $redirect_uri,
+    '#required' => FALSE,
   ];
 
   $form['submit'] = [
@@ -105,17 +133,24 @@ function trakt_tv_settings_form($form, &$form_state) {
  * Submit handler for Trakt TV API settings form.
  */
 function trakt_tv_settings_form_submit($form, &$form_state) {
-  if (!empty($form_state['values']['api_key'])) {
-    $api_key = $form_state['values']['api_key'];
 
-    // Save the API key to configuration.
-    config_set('trakt_tv.settings', 'api_key', $api_key);
+  $values = $form_state['values'];
 
-    backdrop_set_message(t('The Trakt TV API key has been saved.'));
-  }
-  else {
-    backdrop_set_message(t('Please enter a valid API key.'), 'error');
-  }
+  // Save the API key to configuration.
+  // config_set('trakt_tv.settings', 'client_id', $values['client_id']);
+  // config_set('trakt_tv.settings', 'client_secret', $values['client_secret']);
+  // config_set('trakt_tv.settings', 'redirect_uri', $values['redirect_uri']);
+  // config_set('trakt_tv.settings', 'refresh_token', $values['refresh_token']);
+  // config_set('trakt_tv.settings', 'token_expires', $values['token_expires']);
+
+  $credentials = [
+    'client_id' => $form_state['values']['client_id'],
+    'client_secret' => $form_state['values']['client_secret'],
+    'redirect_uri' => $form_state['values']['redirect_uri'],
+  ];
+
+  file_unmanaged_save_data(json_encode($credentials), 'private://credentials.json', FILE_EXISTS_REPLACE);
+  backdrop_set_message(t('Trakt credentials saved to private directory.'));
 }
 
 

@@ -10,6 +10,12 @@
  * Creates a node from a Trakt TV ID.
  */
 function trakt_tv_create_node_from_trakt_id($trakt_id) {
+
+  if (!user_access('save tv shows')) {
+    backdrop_access_denied();
+    return '<p>Access denied. You do not have permission to save TV shows.</p>';
+  }
+  
   $show = trakt_tv_fetch_show_details($trakt_id);
 
   if (empty($show) || !isset($show['title'])) {
