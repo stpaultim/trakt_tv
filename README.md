@@ -3,6 +3,10 @@
 This module has been created to integrate with the [Trakt TV](https://trakt.tv/) API in a limited
 manner. This is a new module, custom made for Backdrop CMS.
 
+This module should be fully functional, but with very limted features. I will release it once I 
+know that one or two other people have tested it out. It's a very niche module, but may be useful
+to some folks interested in learning how to access API's. 
+
 It currently, does the following. 
 
 1) Allows a site vistor to view a list of the top 10 trending shows on Trakt TV.
