@@ -97,10 +97,16 @@ function trakt_tv_settings_form($form, &$form_state) {
   $client_secret = isset($creds['client_secret']) ? $creds['client_secret'] : '';
   $redirect_uri = isset($creds['redirect_uri']) ? $creds['redirect_uri'] : '';
 
+  $form['intro'] = [
+    '#type' => 'markup',
+    '#markup' => t('You will need to create an account at <a href="@url" target="_blank">@url</a> to get the credentials necessary to use the API required by this module.', [
+      '@url' => 'https://trakt.tv/oauth/applications/new',
+    ]),
+  ];
+
   $form['client_id'] = [
     '#type' => 'textfield',
     '#title' => t('Client ID'),
-    '#description' => t('Client ID.'),
     '#default_value' => $client_id,
     '#required' => FALSE,
   ];
@@ -108,7 +114,6 @@ function trakt_tv_settings_form($form, &$form_state) {
   $form['client_secret'] = [
     '#type' => 'textfield',
     '#title' => t('Client Secret'),
-    '#description' => t('Client Secret.'),
     '#default_value' => $client_secret,
     '#required' => FALSE,
   ];
@@ -116,7 +121,6 @@ function trakt_tv_settings_form($form, &$form_state) {
   $form['redirect_uri'] = [
     '#type' => 'textfield',
     '#title' => t('Redirect URI'),
-    '#description' => t('---.'),
     '#default_value' => $redirect_uri,
     '#required' => FALSE,
   ];
@@ -151,6 +155,9 @@ function trakt_tv_settings_form_submit($form, &$form_state) {
 
   file_unmanaged_save_data(json_encode($credentials), 'private://credentials.json', FILE_EXISTS_REPLACE);
   backdrop_set_message(t('Trakt credentials saved to private directory.'));
+    backdrop_set_message(t('You will need to authorize the URI entered and use the code returned in the URL to get the access token needed here: <a href="@url">@url</a>', [
+    '@url' => url('admin/config/media/trakt_tv/auth-exchange'),
+  ]), 'info');
 }
 
 

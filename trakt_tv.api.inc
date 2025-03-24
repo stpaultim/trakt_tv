@@ -45,6 +45,12 @@ function trakt_tv_fetch_trending() {
   $access_token = trakt_tv_get_valid_token();
   $creds = trakt_tv_get_credentials();
 
+  if (!$creds) {
+    backdrop_set_message(t('You have not entered API credentials for Trakt TV yet. Please <a href="@url">go to the settings page</a> to configure them.', [
+      '@url' => url('admin/config/media/trakt_tv'),
+    ]), 'info');
+  }
+
   if (!$access_token) {
     watchdog('trakt_tv', '002 - Missing Trakt access token.', [], WATCHDOG_ERROR);
     return [];
