@@ -191,32 +191,20 @@ function trakt_tv_create_node_from_trakt_id($trakt_id) {
  *   HTML output indicating the status of the node.
  */
 function trakt_tv_node_check($show) {
-  $title = $show['show']['title'];
-  $year = $show['show']['year'];
   $trakt_id = $show['show']['ids']['trakt'];
 
-  if (trakt_tv_show_exists($trakt_id)) {
-    // Get the nid of the existing node.
-    $nid = db_query("
-      SELECT n.nid 
-      FROM {node} n
-      INNER JOIN {field_data_field_year} y ON n.nid = y.entity_id
-      WHERE n.title = :title 
-        AND y.field_year_value = :year
-        AND n.type = :type",
-      [
-        ':title' => $title,
-        ':year' => $year,
-        ':type' => 'tv_show',
-      ]
-    )->fetchField();
+  $nid = trakt_tv_show_exists($trakt_id);
 
-    return '<em>Already exists</em> - <a href="/node/' . $nid . '">(view)</a>';
-  } else {
-    return '<a href="/trakt-tv-create-node-from-id/' . $show['show']['ids']['trakt'] . '">Add to database</a>';
+  if (!empty($nid)) {
+    return '<b>Copied <a style="font-size: 105%;" href="/node/' . $nid . '">(View details)</a></b>';
+  }
+  elseif (user_access('create tv show content')) {
+    return '<em><a class="add-to-db" style="font-size: 95%;" href="/trakt-tv-create-node-from-id/' . $trakt_id . '">Add to database</a></em>';
+  }
+  else {
+    return '<em style="font-size: 95%;">No local entry</em>';
   }
 }
-
 
 /**
  * Check if a TV show already exists based on Trakt ID.
@@ -228,7 +216,6 @@ function trakt_tv_node_check($show) {
  *   TRUE if the show exists, FALSE otherwise.
  */
 function trakt_tv_show_exists($trakt_id) {
-  // Query the database to check if a node exists with the same Trakt ID.
   $nid = db_query("
     SELECT n.nid 
     FROM {node} n
@@ -237,10 +224,9 @@ function trakt_tv_show_exists($trakt_id) {
       AND n.type = :type",
     [
       ':trakt_id' => $trakt_id,
-      ':type' => 'tv_show', // Replace with your content type machine name.
+      ':type' => 'tv_show',
     ]
   )->fetchField();
 
-  // Return TRUE if an existing node ID is found, otherwise FALSE.
-  return !empty($nid);
+  return $nid;
 }

@@ -30,7 +30,7 @@ function trakt_tv_menu() {
 
   // Route for trending TV shows.
   $items['trakt-tv'] = [
-    'title' => 'Trending TV Shows',
+    'title' => 'Trending TV Shows on Trakt',
     'page callback' => 'trakt_tv_display',
     'access arguments' => ['access content'],
     'type' => MENU_CALLBACK,
@@ -38,7 +38,7 @@ function trakt_tv_menu() {
 
   // Route for the search form.
   $items['trakt-tv-search'] = [
-    'title' => 'Search TV Show',
+    'title' => 'Search Trakt TV',
     'page callback' => 'drupal_get_form',
     'page arguments' => ['trakt_tv_search_form'],
     'access arguments' => ['access content'],
@@ -47,7 +47,7 @@ function trakt_tv_menu() {
 
   // Route for search results.
   $items['trakt-tv-search-results/%'] = [
-    'title' => 'Search Results',
+    'title' => 'Trakt TV Search Results',
     'page callback' => 'trakt_tv_search_results_page',
     'page arguments' => [1],
     'access arguments' => ['access content'],
@@ -140,13 +140,6 @@ function trakt_tv_settings_form_submit($form, &$form_state) {
 
   $values = $form_state['values'];
 
-  // Save the API key to configuration.
-  // config_set('trakt_tv.settings', 'client_id', $values['client_id']);
-  // config_set('trakt_tv.settings', 'client_secret', $values['client_secret']);
-  // config_set('trakt_tv.settings', 'redirect_uri', $values['redirect_uri']);
-  // config_set('trakt_tv.settings', 'refresh_token', $values['refresh_token']);
-  // config_set('trakt_tv.settings', 'token_expires', $values['token_expires']);
-
   $credentials = [
     'client_id' => $form_state['values']['client_id'],
     'client_secret' => $form_state['values']['client_secret'],
@@ -180,24 +173,28 @@ function trakt_tv_display() {
  */
 
 function trakt_tv_create_table($shows) {
-  $header = ['Title', 'Year', 'Status', 'ID'];
+  $header = ['Title', 'Year', 'Status'];
   $rows = [];
 
   foreach ($shows as $show) {
-
     $rows[] = [
       $show['show']['title'],
       $show['show']['year'],
       trakt_tv_node_check($show),
-      $show['show']['ids']['trakt']
     ];
   }
 
-  // Render the table and return it.
-  return theme('table', [
-    'header' => $header,
-    'rows' => $rows,
-  ]);
+  // Return both a message and the table in a render array.
+  return [
+    'intro' => [
+      '#markup' => '<p><strong>Here are the top 10 shows currently trending on Trakt TV.</strong></p>',
+    ],
+    'table' => [
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
+    ],
+  ];
 }
 
 
@@ -207,7 +204,7 @@ function trakt_tv_create_table($shows) {
 function trakt_tv_search_form($form, &$form_state) {
   $form['search_query'] = [
     '#type' => 'textfield',
-    '#title' => t('Search for a TV Show'),
+    '#title' => t('Search for a Show on Trakt TV'),
     '#description' => t('Enter the name of the TV show to search.'),
     '#required' => TRUE,
   ];
