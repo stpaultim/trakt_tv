@@ -45,8 +45,6 @@ function trakt_tv_auth_code_exchange_form($form, &$form_state) {
 
 function trakt_tv_auth_code_exchange_form_submit($form, &$form_state) {
   $code = trim($form_state['values']['auth_code']);
-  dpm("code");
-  dpm($code);
   $success = trakt_tv_exchange_auth_code($code);
 
   if ($success) {

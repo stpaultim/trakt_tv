@@ -187,7 +187,7 @@ function trakt_tv_create_table($shows) {
   // Return both a message and the table in a render array.
   return [
     'intro' => [
-      '#markup' => '<p><strong>Here are the top 10 shows currently trending on Trakt TV.</strong></p>',
+      '#markup' => '<p><strong>Here are the results from Trakt TV.</strong></p>',
     ],
     'table' => [
       '#theme' => 'table',
