@@ -22,7 +22,14 @@ It currently, does the following.
    - Website
    - Genres
    - Network
-  
+4) Provides a "Recently watched on Trakt" block showing the site owner's most
+   recently scrobbled episodes, for placement in any layout region. The number
+   of episodes shown is configurable, and results are cached for 15 minutes to
+   avoid hammering the Trakt API.
+5) Provides an "Upcoming on Trakt" block showing episodes airing soon for shows
+   on the site owner's Trakt watchlist. The time window (3 days to 1 month) is
+   configurable, and results are cached for 15 minutes.
+
 This module creates a content type called TV Show with all of the fields required by
 this module. 
 

@@ -157,6 +157,66 @@ function trakt_tv_fetch_history($limit = 10) {
   return is_array($data) ? $data : [];
 }
 
+/**
+ * Fetch upcoming episodes for shows on the authenticated user's watchlist.
+ *
+ * @param int $days
+ *   Number of days ahead to fetch, starting today (1-60).
+ *
+ * @return array
+ *   Array of calendar items, or empty array on failure.
+ */
+function trakt_tv_fetch_upcoming($days = 7) {
+  $access_token = trakt_tv_get_valid_token();
+  $creds = trakt_tv_get_credentials();
+
+  if (!$access_token) {
+    watchdog('trakt_tv', 'Missing Trakt access token for upcoming fetch.', [], WATCHDOG_ERROR);
+    return [];
+  }
+
+  $days = max(1, min(60, (int) $days));
+  $start = gmdate('Y-m-d');
+  $url = 'https://api.trakt.tv/calendars/my/shows/' . $start . '/' . $days;
+
+  $ch = curl_init($url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Accept: application/json',
+    'Content-Type: application/json',
+    'trakt-api-version: 2',
+    'trakt-api-key: ' . $creds['client_id'],
+    'Authorization: Bearer ' . $access_token,
+  ]);
+  curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+  $response = curl_exec($ch);
+  $error = curl_error($ch);
+  $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+
+  if ($response === FALSE) {
+    watchdog('trakt_tv', 'Upcoming fetch cURL failed: @error', ['@error' => $error], WATCHDOG_ERROR);
+    return [];
+  }
+
+  if ($status !== 200) {
+    watchdog('trakt_tv', 'Trakt upcoming API returned status: @status - @body', [
+      '@status' => $status,
+      '@body' => $response,
+    ], WATCHDOG_ERROR);
+    return [];
+  }
+
+  $data = json_decode($response, TRUE);
+  if (json_last_error() !== JSON_ERROR_NONE) {
+    watchdog('trakt_tv', 'Upcoming JSON decode error: @error', ['@error' => json_last_error_msg()], WATCHDOG_ERROR);
+    return [];
+  }
+
+  return is_array($data) ? $data : [];
+}
+
 
 function trakt_tv_get_valid_token() {
   $tokens = trakt_tv_token_store_get();

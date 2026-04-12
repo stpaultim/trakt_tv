@@ -262,6 +262,10 @@ function trakt_tv_block_info() {
     'info' => t('Trakt TV: Recently watched episodes'),
     'description' => t("Displays the most recently watched episodes from the site owner's connected Trakt TV account."),
   ];
+  $blocks['upcoming_episodes'] = [
+    'info' => t('Trakt TV: Upcoming episodes'),
+    'description' => t("Displays upcoming episodes for shows on the site owner's Trakt TV watchlist."),
+  ];
   return $blocks;
 }
 
@@ -279,6 +283,20 @@ function trakt_tv_block_configure($delta = '', $settings = []) {
       '#default_value' => $settings['item_count'],
     ];
   }
+  elseif ($delta === 'upcoming_episodes') {
+    $settings += ['days_ahead' => 7];
+    $form['days_ahead'] = [
+      '#type' => 'select',
+      '#title' => t('Days ahead'),
+      '#options' => [
+        3 => t('3 days'),
+        7 => t('1 week'),
+        14 => t('2 weeks'),
+        30 => t('1 month'),
+      ],
+      '#default_value' => $settings['days_ahead'],
+    ];
+  }
   return $form;
 }
 
@@ -286,12 +304,20 @@ function trakt_tv_block_configure($delta = '', $settings = []) {
  * Implements hook_block_view().
  */
 function trakt_tv_block_view($delta = '', $settings = [], $contexts = []) {
-  if ($delta !== 'recently_watched') {
-    return;
-  }
-
   module_load_include('inc', 'trakt_tv', 'trakt_tv.api');
 
+  switch ($delta) {
+    case 'recently_watched':
+      return _trakt_tv_block_recently_watched($settings);
+    case 'upcoming_episodes':
+      return _trakt_tv_block_upcoming_episodes($settings);
+  }
+}
+
+/**
+ * Render the "Recently watched on Trakt" block.
+ */
+function _trakt_tv_block_recently_watched($settings) {
   $count = isset($settings['item_count']) ? (int) $settings['item_count'] : 5;
   $count = max(1, min(50, $count));
 
@@ -346,6 +372,75 @@ function trakt_tv_block_view($delta = '', $settings = [], $contexts = []) {
     '#theme' => 'item_list',
     '#items' => $items,
     '#attributes' => ['class' => ['trakt-tv-recently-watched']],
+  ];
+
+  return $block;
+}
+
+/**
+ * Render the "Upcoming episodes on Trakt" block.
+ */
+function _trakt_tv_block_upcoming_episodes($settings) {
+  $days = isset($settings['days_ahead']) ? (int) $settings['days_ahead'] : 7;
+  $days = max(1, min(60, $days));
+
+  $cid = 'trakt_tv:upcoming:' . $days;
+  $upcoming = NULL;
+  if ($cached = cache_get($cid)) {
+    $upcoming = $cached->data;
+  }
+  if ($upcoming === NULL) {
+    $upcoming = trakt_tv_fetch_upcoming($days);
+    if (!empty($upcoming)) {
+      cache_set($cid, $upcoming, 'cache', REQUEST_TIME + (15 * 60));
+    }
+  }
+
+  $block = [
+    'subject' => t('Upcoming on Trakt'),
+    'content' => [],
+  ];
+
+  if (empty($upcoming)) {
+    $block['content']['#markup'] = '<p>' . t('No upcoming episodes to display.') . '</p>';
+    return $block;
+  }
+
+  $items = [];
+  foreach ($upcoming as $item) {
+    if (empty($item['show']['title']) || empty($item['episode'])) {
+      continue;
+    }
+    $ep = $item['episode'];
+    $show_title = check_plain($item['show']['title']);
+    $ep_code = sprintf('S%02dE%02d', (int) $ep['season'], (int) $ep['number']);
+    $ep_title = !empty($ep['title']) ? check_plain($ep['title']) : '';
+
+    $airs_at = !empty($item['first_aired']) ? strtotime($item['first_aired']) : 0;
+    $when = '';
+    if ($airs_at) {
+      if ($airs_at > REQUEST_TIME) {
+        $when = t('in @interval', ['@interval' => format_interval($airs_at - REQUEST_TIME, 2)]);
+      }
+      else {
+        $when = t('@interval ago', ['@interval' => format_interval(REQUEST_TIME - $airs_at, 2)]);
+      }
+    }
+
+    $line = '<strong>' . $show_title . '</strong> · ' . $ep_code;
+    if ($ep_title !== '') {
+      $line .= ' · ' . $ep_title;
+    }
+    if ($when !== '') {
+      $line .= ' <span class="trakt-tv-when">(' . $when . ')</span>';
+    }
+    $items[] = $line;
+  }
+
+  $block['content']['list'] = [
+    '#theme' => 'item_list',
+    '#items' => $items,
+    '#attributes' => ['class' => ['trakt-tv-upcoming-episodes']],
   ];
 
   return $block;
