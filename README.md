@@ -9,7 +9,7 @@ to some folks interested in learning how to access API's.
 
 It currently, does the following. 
 
-1) Allows a site vistor to view a list of the top 10 trending shows on Trakt TV.
+1) Allows a site vistor to view a list of the top 20 trending shows on Trakt TV.
 2) Allows a site vistor to search for a specific TV show in the Trakt TV database.
 3) Allows a site vistor to create a node with the following data for any TV show.
    - Title

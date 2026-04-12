@@ -187,7 +187,7 @@ function trakt_tv_create_table($shows) {
   // Return both a message and the table in a render array.
   return [
     'intro' => [
-      '#markup' => '<p><strong>Here are the results from Trakt TV.</strong></p>',
+      '#markup' => '<p><strong>Here are the top 20 trending shows on Trakt TV.</strong></p>',
     ],
     'table' => [
       '#theme' => 'table',
@@ -252,4 +252,101 @@ function trakt_tv_search_results_page($query) {
     return '<p>No TV shows found for the query: ' . check_plain($query) . '</p>';
   }
   return trakt_tv_create_table($shows);
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function trakt_tv_block_info() {
+  $blocks['recently_watched'] = [
+    'info' => t('Trakt TV: Recently watched episodes'),
+    'description' => t("Displays the most recently watched episodes from the site owner's connected Trakt TV account."),
+  ];
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function trakt_tv_block_configure($delta = '', $settings = []) {
+  $form = [];
+  if ($delta === 'recently_watched') {
+    $settings += ['item_count' => 5];
+    $form['item_count'] = [
+      '#type' => 'select',
+      '#title' => t('Number of episodes to show'),
+      '#options' => backdrop_map_assoc([3, 5, 10, 15, 20]),
+      '#default_value' => $settings['item_count'],
+    ];
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function trakt_tv_block_view($delta = '', $settings = [], $contexts = []) {
+  if ($delta !== 'recently_watched') {
+    return;
+  }
+
+  module_load_include('inc', 'trakt_tv', 'trakt_tv.api');
+
+  $count = isset($settings['item_count']) ? (int) $settings['item_count'] : 5;
+  $count = max(1, min(50, $count));
+
+  $cid = 'trakt_tv:history:' . $count;
+  $history = NULL;
+  if ($cached = cache_get($cid)) {
+    $history = $cached->data;
+  }
+  if ($history === NULL) {
+    $history = trakt_tv_fetch_history($count);
+    if (!empty($history)) {
+      cache_set($cid, $history, 'cache', REQUEST_TIME + (15 * 60));
+    }
+  }
+
+  $block = [
+    'subject' => t('Recently watched on Trakt'),
+    'content' => [],
+  ];
+
+  if (empty($history)) {
+    $block['content']['#markup'] = '<p>' . t('No recent activity to display.') . '</p>';
+    return $block;
+  }
+
+  $items = [];
+  foreach ($history as $item) {
+    if (empty($item['show']['title']) || empty($item['episode'])) {
+      continue;
+    }
+    $ep = $item['episode'];
+    $show_title = check_plain($item['show']['title']);
+    $ep_code = sprintf('S%02dE%02d', (int) $ep['season'], (int) $ep['number']);
+    $ep_title = !empty($ep['title']) ? check_plain($ep['title']) : '';
+
+    $watched_at = !empty($item['watched_at']) ? strtotime($item['watched_at']) : 0;
+    $ago = ($watched_at && $watched_at <= REQUEST_TIME)
+      ? t('@interval ago', ['@interval' => format_interval(REQUEST_TIME - $watched_at, 2)])
+      : '';
+
+    $line = '<strong>' . $show_title . '</strong> · ' . $ep_code;
+    if ($ep_title !== '') {
+      $line .= ' · ' . $ep_title;
+    }
+    if ($ago !== '') {
+      $line .= ' <span class="trakt-tv-ago">(' . $ago . ')</span>';
+    }
+    $items[] = $line;
+  }
+
+  $block['content']['list'] = [
+    '#theme' => 'item_list',
+    '#items' => $items,
+    '#attributes' => ['class' => ['trakt-tv-recently-watched']],
+  ];
+
+  return $block;
 }
